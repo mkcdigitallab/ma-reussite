@@ -1,0 +1,11 @@
+Ma réussite
+===========
+AVANT TOUT : ouvre app.js et change, tout en haut, le nom et le numéro WhatsApp du tuteur
+(format international, sans + ni espaces, ex : 221771234567).
+
+Essayer sur ordinateur : double-clique sur index.html.
+Utiliser sur téléphone : il faut mettre le dossier en ligne (ex. GitHub Pages),
+puis ouvrir le lien et choisir « Ajouter à l'écran d'accueil ».
+
+Fichiers : index.html (structure), style.css (apparence), app.js (comportement),
+manifest.json + sw.js + icon-*.png (installation comme une vraie app).

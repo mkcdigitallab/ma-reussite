@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b3a8a">
+<title>Ma réussite</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div><h1>Ma réussite</h1><p id="message" class="muted"></p></div>
+  <span id="streak" class="pill"></span>
+</header>
+
+<main>
+  <section id="home">
+    <div class="card count">
+      <small>Examen de fin d’année</small>
+      <strong id="countdown"></strong>
+      <label>Date de l’examen <input type="date" id="exam"></label>
+    </div>
+    <div class="card">
+      <h2>📸 J’ai une difficulté</h2>
+      <form id="sendForm">
+        <label class="photo">Prendre ou choisir une photo<input type="file" id="photo" accept="image/*"></label>
+        <img id="preview" alt="Aperçu de l’exercice" hidden>
+        <select name="matiere" class="mat" aria-label="Matière"></select>
+        <textarea name="msg" rows="3" placeholder="Qu’est-ce que tu ne comprends pas ?"></textarea>
+        <button>Envoyer à mon tuteur</button>
+        <p id="sendHint" class="muted">Un menu s’ouvre : choisis WhatsApp, puis ton tuteur.</p>
+      </form>
+    </div>
+  </section>
+
+  <section id="study" hidden>
+    <div class="card timer">
+      <small>Séance de révision</small>
+      <div id="time" class="big">25:00</div>
+      <button id="startBtn">Démarrer</button>
+      <p id="timerMsg" class="muted"></p>
+    </div>
+    <div class="card">
+      <h2>Objectif de la semaine</h2>
+      <label>Séances à faire <input type="number" id="goal" min="1" max="30"></label>
+      <div class="progress"><div id="bar"></div></div>
+      <p id="goalText" class="muted"></p>
+    </div>
+  </section>
+
+  <section id="errors" hidden>
+    <div class="card">
+      <h2>📓 Mon carnet d’erreurs</h2>
+      <p id="errCount" class="muted"></p>
+      <form id="errForm" class="row">
+        <select name="m" class="mat" aria-label="Matière"></select>
+        <input name="t" placeholder="Ce que j’ai raté ou pas compris" required>
+        <button>Ajouter</button>
+      </form>
+      <ul id="errList" class="list"></ul>
+    </div>
+  </section>
+
+  <section id="grades" hidden>
+    <div class="card">
+      <h2>📈 Mes notes</h2>
+      <form id="noteForm" class="row">
+        <select name="m" class="mat" aria-label="Matière"></select>
+        <input name="v" type="number" min="0" max="20" step="0.25" placeholder="Note /20" required>
+        <button>Ajouter</button>
+      </form>
+      <table id="avgs"></table>
+      <div id="noteList" class="chips"></div>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-tab="home" aria-current="page">🏠<span>Accueil</span></button>
+  <button data-tab="study">⏱️<span>Réviser</span></button>
+  <button data-tab="errors">📓<span>Erreurs</span></button>
+  <button data-tab="grades">📈<span>Notes</span></button>
+</nav>
+<script src="app.js"></script>
+</body>
+</html>
