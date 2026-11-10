@@ -16,7 +16,7 @@ function showAuth(message = "") {
     screen.className = "auth-screen";
     screen.innerHTML = `
       <div class="auth-card">
-        <div class="auth-brand"><span class="brand-mark">É.</span><span><strong>Évolia</strong><small>Chaque jour, un pas de plus.</small></span></div>
+        <div class="auth-brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><path d="M20 31V17m0 7c-7 0-11-4-11-10 7 0 11 4 11 10Zm0-5c0-7 4-11 10-11 0 7-4 11-10 11Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 32h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span><span><strong>Évolia</strong><small>Chaque jour, un pas de plus.</small></span></div>
         <p class="eyebrow">TON ESPACE PERSONNEL</p>
         <h1>Content de te retrouver.</h1>
         <p class="muted">Connecte-toi pour retrouver tes bilans et partager tes progrès avec ton accompagnateur.</p>
