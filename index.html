@@ -9,26 +9,26 @@
 <body>
 <div class="app-shell">
 <aside class="sidebar">
-<a class="brand" href="#accueil"><span class="brand-mark">CR</span><span><strong>Cap Réussite</strong><small>Ton espace scolaire</small></span></a>
+<a class="brand" href="#accueil"><span class="brand-mark">c.</span><span><strong>Cap Réussite</strong><small>Ton espace scolaire</small></span></a>
 <nav class="side-nav" aria-label="Navigation principale">
-<a class="nav-link active" href="#accueil" data-view="accueil"><span>⌂</span>Accueil</a>
-<a class="nav-link" href="#demandes" data-view="demandes"><span>✉</span>Mes demandes <b id="request-count" class="nav-count">0</b></a>
-<a class="nav-link" href="#travail" data-view="travail"><span>✦</span>Mon bilan</a>
-<a class="nav-link" href="#reglages" data-view="reglages"><span>⚙</span>Réglages</a>
+<a class="nav-link active" href="#accueil" data-view="accueil"><span aria-hidden="true">⌂</span>Accueil</a>
+<a class="nav-link" href="#demandes" data-view="demandes"><span aria-hidden="true">✉</span>Mes demandes <b id="request-count" class="nav-count">0</b></a>
+<a class="nav-link" href="#travail" data-view="travail"><span aria-hidden="true">▤</span>Mon bilan</a>
+<a class="nav-link" href="#reglages" data-view="reglages"><span aria-hidden="true">⚙</span>Réglages</a>
 </nav>
 <div class="sidebar-note"><span>✦</span><p>Un petit pas chaque jour te rapproche de ton objectif.</p></div>
 <div class="sidebar-footer">Fait pour apprendre sereinement.</div>
 </aside>
 <main class="main-content">
-<header class="topbar"><div class="mobile-brand"><span class="brand-mark">CR</span><strong>Cap Réussite</strong></div><div class="topbar-spacer"></div><span id="today-label" class="today-label"></span><button class="avatar" id="profile-shortcut" type="button" aria-label="Ouvrir les réglages">É</button></header>
+<header class="topbar"><div class="mobile-brand"><span class="brand-mark">c.</span><strong>Cap Réussite</strong></div><div class="topbar-spacer"></div><span id="today-label" class="today-label"></span><button class="avatar" id="profile-shortcut" type="button" aria-label="Ouvrir les réglages">É</button></header>
 <section class="view active" id="view-accueil">
 <div class="welcome-row"><div><p class="eyebrow">TON ESPACE PERSONNEL</p><h1>Bonjour <span id="student-name-heading">élève</span> <span>👋</span></h1><p class="muted">On avance tranquillement, une étape après l’autre.</p></div><div class="date-card"><span>AUJOURD’HUI</span><strong id="date-large">—</strong></div></div>
 <div class="hero-card"><div class="hero-copy"><span class="hero-kicker">TON OBJECTIF DU JOUR</span><h2>Tu n’as pas besoin de tout réussir aujourd’hui.</h2><p>Commence par une chose. Si tu bloques, demande de l’aide : tu n’es pas seul.</p><button class="button button-light" data-open="demande">J’ai besoin d’aide <span>→</span></button></div><div class="hero-art" aria-hidden="true"><div class="sun"></div><div class="book book-one"></div><div class="book book-two"></div><div class="sparkle">✦</div></div></div>
 <div class="section-heading"><div><p class="eyebrow">ACCÈS RAPIDE</p><h2>Que veux-tu faire ?</h2></div></div>
 <div class="quick-grid">
-<button class="quick-card quick-help" data-open="demande"><span class="quick-icon">✉</span><span><strong>Envoyer un message</strong><small>Explique ce qui te bloque</small></span><span class="quick-arrow">↗</span></button>
-<button class="quick-card" data-view="travail"><span class="quick-icon green">✦</span><span><strong>Faire mon bilan</strong><small>Raconte ta journée et tes progrès</small></span><span class="quick-arrow">↗</span></button>
-<button class="quick-card" data-view="demandes"><span class="quick-icon orange">☷</span><span><strong>Mes demandes</strong><small>Consulte les messages envoyés</small></span><span class="quick-arrow">↗</span></button>
+<button class="quick-card quick-help" data-open="demande"><span class="quick-icon">↗</span><span><strong>Envoyer un message</strong><small>Explique ce qui te bloque</small></span><span class="quick-arrow">↗</span></button>
+<button class="quick-card" data-view="travail"><span class="quick-icon green">▤</span><span><strong>Faire mon bilan</strong><small>Raconte ta journée et tes progrès</small></span><span class="quick-arrow">↗</span></button>
+<button class="quick-card" data-view="demandes"><span class="quick-icon orange">◷</span><span><strong>Mes demandes</strong><small>Consulte les messages envoyés</small></span><span class="quick-arrow">↗</span></button>
 </div>
 <section class="daily-teaser"><div class="daily-teaser-copy"><span class="eyebrow">LE RENDEZ-VOUS DU SOIR</span><h2>Et aujourd’hui, qu’as-tu appris ?</h2><p>Prends 3 minutes pour te souvenir de tes efforts. Chaque journée compte.</p><button class="button button-dark" data-view="travail">Faire mon bilan du jour <span>→</span></button></div><div class="daily-stats"><div><strong id="days-count">0</strong><span>journées racontées</span></div><div><strong id="week-count">0</strong><span>cette semaine</span></div></div></section>
 <div class="bottom-grid">
@@ -37,10 +37,10 @@
 </div></section>
 <section class="view" id="view-demandes">
 <div class="page-heading"><p class="eyebrow">COMMUNICATION</p><h1>Mes demandes</h1><p class="muted">Explique une difficulté ou partage une information à ton accompagnateur.</p></div>
-<div class="panel request-panel"><div class="panel-heading"><div><h2>Nouvelle demande</h2><p class="muted small">Écris simplement ce que tu veux lui faire savoir.</p></div><span class="round-icon">✎</span></div>
+<div class="panel request-panel"><div class="panel-heading"><div><h2>Nouvelle demande</h2><p class="muted small">Écris simplement ce que tu veux lui faire savoir.</p></div><span class="round-icon">↗</span></div>
 <form id="request-form"><label for="request-subject">De quoi s’agit-il ?</label><select id="request-subject" required><option value="">Choisir un sujet</option><option>Je ne comprends pas un cours</option><option>J’ai un exercice difficile</option><option>J’ai une question</option><option>Je veux partager une information</option><option>Autre problème</option></select>
 <label for="request-message">Ton message</label><textarea id="request-message" rows="5" maxlength="1200" placeholder="Explique avec tes mots. Qu’est-ce qui se passe ? Qu’as-tu déjà essayé ?" required></textarea><div class="field-meta"><span>Tu peux écrire comme tu parles, il n’y a pas de mauvaise façon de demander.</span><span id="char-count">0/1200</span></div>
-<label class="upload-box" for="request-photo"><span class="upload-icon">＋</span><span><strong>Ajouter une photo (facultatif)</strong><small>Une photo de ton exercice ou de ton cahier.</small></span><input id="request-photo" type="file" accept="image/*" capture="environment"></label><div id="photo-preview" class="photo-preview" hidden></div>
+<div class="photo-actions"><label class="upload-box" for="request-camera"><span class="upload-icon">◎</span><span><strong>Prendre une photo</strong><small>Ouvrir l’appareil photo du téléphone.</small></span><input id="request-camera" type="file" accept="image/*" capture="environment"></label><label class="upload-box" for="request-gallery"><span class="upload-icon">＋</span><span><strong>Choisir dans la galerie</strong><small>Utiliser une photo déjà enregistrée.</small></span><input id="request-gallery" type="file" accept="image/*"></label></div><div id="photo-preview" class="photo-preview" hidden></div>
 <button class="button button-primary full-button" type="submit">Préparer l’envoi sur WhatsApp <span>→</span></button><p class="privacy-note">WhatsApp s’ouvrira. Tu devras appuyer sur « Envoyer » pour transmettre ton message.</p></form></div>
 <div class="panel history-panel"><div class="panel-heading"><div><p class="eyebrow">SUIVI</p><h2>Historique récent</h2></div></div><div id="request-history"></div></div>
 </section>
@@ -63,6 +63,6 @@
 <section class="panel danger-zone"><h2>Réinitialiser l’application</h2><p class="muted">Cette action efface les tâches, les demandes et les réglages enregistrés sur cet appareil.</p><button class="button button-danger" id="reset-app" type="button">Effacer mes données</button></section></section>
 <footer class="main-footer">Cap Réussite <span>•</span> Chaque progrès compte.</footer>
 </main></div>
-<nav class="mobile-nav" aria-label="Navigation mobile"><a class="active" href="#accueil" data-view="accueil"><span>⌂</span><small>Accueil</small></a><a href="#demandes" data-view="demandes"><span>✉</span><small>Demandes</small></a><a href="#travail" data-view="travail"><span>✦</span><small>Bilan</small></a><a href="#reglages" data-view="reglages"><span>⚙</span><small>Réglages</small></a></nav>
+<nav class="mobile-nav" aria-label="Navigation mobile"><a class="active" href="#accueil" data-view="accueil"><span>⌂</span><small>Accueil</small></a><a href="#demandes" data-view="demandes"><span>✉</span><small>Messages</small></a><a href="#travail" data-view="travail"><span>▤</span><small>Bilan</small></a><a href="#reglages" data-view="reglages"><span>⚙</span><small>Réglages</small></a></nav>
 <div id="toast" class="toast" role="status" aria-live="polite"></div><script src="app.js" defer></script>
 </body></html>
