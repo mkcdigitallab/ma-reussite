@@ -76,11 +76,6 @@ async function startSession() {
   }
   showApp();
   await loadStudentData();
-  const ready = sessionStorage.getItem("evolia-cloud-loaded");
-  if (!ready) {
-    sessionStorage.setItem("evolia-cloud-loaded", "1");
-    location.reload();
-  } else sessionStorage.removeItem("evolia-cloud-loaded");
   addSignOutButton();
 }
 
