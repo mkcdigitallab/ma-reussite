@@ -1,51 +1,39 @@
-# Cap Réussite
+# Évolia
 
-**Cap Réussite** est une petite application web pensée pour accompagner un élève de troisième lorsque son accompagnateur n'est pas toujours disponible.
+Évolia est un espace privé de suivi scolaire entre un élève et son accompagnateur.
 
-## Ce que l'application permet
+## Fonctionnalités
+- Connexion par e-mail et mot de passe (comptes créés par l'accompagnateur).
+- Bilans quotidiens synchronisés en ligne.
+- Demandes d'aide avec photos prises par l'appareil ou choisies dans la galerie.
+- Espace accompagnateur protégé pour consulter les bilans, difficultés, objectifs et photos privées.
+- Interface mobile-first installable comme une PWA.
 
-- Envoyer une demande d'aide ou une information à l'accompagnateur via WhatsApp.
-- Joindre une photo d'un exercice ou d'un cahier (selon les capacités de partage du téléphone).
-- Retrouver l'historique local des demandes préparées.
-- Ajouter des tâches scolaires, les classer par matière et les cocher une fois terminées.
-- Installer l'application sur un téléphone comme une PWA et ouvrir les pages déjà mises en cache hors connexion.
+## Stack
+- Frontend : HTML, CSS, JavaScript, Vite.
+- Authentification, base PostgreSQL et stockage privé : Supabase.
+- Hébergement : Render Static Site.
 
-## Configuration
+## Configuration locale
+1. `npm install`
+2. Définir `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY`.
+3. `npm run dev`
 
-1. Ouvrir l'application.
-2. Aller dans **Réglages**.
-3. Saisir le prénom de l'élève.
-4. Saisir le numéro WhatsApp de l'accompagnateur avec l'indicatif international, uniquement des chiffres (ex. Sénégal : `221771234567`).
-5. Enregistrer.
+La clé publishable peut être utilisée dans le navigateur uniquement avec les politiques RLS de `supabase/schema.sql` activées. Ne jamais exposer une clé secret ou service_role.
 
-## Lancer le projet
+## Configuration Supabase
+1. Créer un projet Supabase.
+2. Exécuter `supabase/schema.sql` dans SQL Editor.
+3. Dans Authentication > Users, créer le compte accompagnateur et le compte élève.
+4. Copier leurs UUID, puis exécuter les deux UPDATE commentés à la fin du SQL pour attribuer les rôles et relier l'élève à l'accompagnateur.
+5. Désactiver l'inscription publique.
+6. Renseigner l'URL du projet et la clé publishable dans les variables d'environnement Render.
 
-Le projet ne nécessite ni installation de dépendances ni compilation.
+## Déploiement Render
+- Type : Static Site
+- Branch : `feat/evolia-cloud`
+- Build command : `npm install && npm run build`
+- Publish directory : `dist`
+- Variables : `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-Pour le tester localement, servir le dossier avec un petit serveur HTTP, par exemple :
-
-```bash
-python3 -m http.server 8000
-```
-
-Puis ouvrir `http://localhost:8000`.
-
-Pour l'installation PWA, publier le dossier sur un hébergement HTTPS, puis utiliser la commande **Ajouter à l'écran d'accueil** du navigateur.
-
-## Limites importantes
-
-- Les tâches, réglages et demandes sont enregistrés dans le stockage local du navigateur. Ils ne sont pas synchronisés entre plusieurs appareils.
-- L'application ne déclenche pas de notification à distance sur le téléphone de l'accompagnateur. Elle prépare une conversation WhatsApp ; l'élève doit confirmer l'envoi.
-- Sur certains téléphones, le partage de photo fonctionne directement. Sinon, la photo est téléchargée et doit être ajoutée manuellement dans WhatsApp.
-- Pour un véritable espace accompagnateur, une synchronisation multi-appareils et des notifications automatiques, il faudra ajouter un backend et un système d'authentification.
-
-## Fichiers principaux
-
-- `index.html` : structure et contenus.
-- `styles.css` : identité visuelle et responsive.
-- `app.js` : navigation, tâches, demandes et stockage local.
-- `manifest.webmanifest`, `sw.js`, `icon.svg` : installation PWA et cache hors ligne.
-
-## Vie privée
-
-Les données restent dans le navigateur de l'appareil. Ne pas saisir d'informations sensibles.
+Les photos sont conservées dans un bucket privé. Les liens de consultation sont signés temporairement par le client authentifié.
