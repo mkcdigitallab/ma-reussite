@@ -32,6 +32,7 @@ function showAuth(message = "") {
     $("#evolia-login").addEventListener("submit", async (event) => {
       event.preventDefault();
       const button = event.submitter;
+      if (!supabase) return;
       button.disabled = true;
       $("#auth-message").textContent = "Connexion en cours…";
       const { error } = await supabase.auth.signInWithPassword({
@@ -45,6 +46,8 @@ function showAuth(message = "") {
   }
   screen.hidden = false;
   $("#auth-message").textContent = message;
+  const loginButton = $("#evolia-login button");
+  if (loginButton) loginButton.disabled = !supabase;
   $(".app-shell")?.setAttribute("hidden", "");
 }
 
@@ -96,7 +99,8 @@ async function loadStudentData() {
     id: row.id, subject: row.subject, message: row.message,
     date: row.created_at, hasPhoto: Boolean(row.photo_path), photoPath: row.photo_path
   }));
-  localStorage.setItem(KEY, JSON.stringify({ name: profile.display_name || "", tasks: state.tasks || [], phone: "", ...state }));
+  localStorage.setItem(KEY, JSON.stringify({ ...state, name: profile.display_name || state.name || "", tasks: state.tasks || [], phone: "", dailyLogs: state.dailyLogs, requests: state.requests }));
+  window.dispatchEvent(new CustomEvent("evolia:cloud-data-loaded"));
 }
 
 async function uploadPhoto(file) {
@@ -118,7 +122,11 @@ document.addEventListener("evolia:daily-log-saved", async (event) => {
     effort: entry.effort, done: entry.done, learned: entry.learned,
     hard: entry.hard || "", next: entry.next || ""
   }, { onConflict: "student_id,day" });
-  if (error) alert("Le bilan n'a pas pu être synchronisé. Vérifie ta connexion internet.");
+  if (error) {
+    alert("Le bilan reste enregistré sur cet appareil, mais n'a pas pu être envoyé en ligne. Vérifie ta connexion puis réessaie.");
+  } else {
+    document.dispatchEvent(new CustomEvent("evolia:sync-success", { detail: "Bilan synchronisé avec ton accompagnateur." }));
+  }
 });
 
 document.addEventListener("evolia:request-saved", async (event) => {
@@ -130,8 +138,9 @@ document.addEventListener("evolia:request-saved", async (event) => {
       message: event.detail.message, photo_path: photoPath
     });
     if (error) throw error;
+    document.dispatchEvent(new CustomEvent("evolia:sync-success", { detail: "Demande transmise à ton accompagnateur." }));
   } catch (error) {
-    alert(error.message || "La demande n'a pas pu être enregistrée en ligne.");
+    alert(error.message || "La demande n'a pas pu être enregistrée en ligne. Elle reste conservée sur cet appareil.");
   }
 });
 
@@ -160,8 +169,8 @@ async function loadTutorDashboard() {
     root.innerHTML = '<p class="muted">Impossible de charger les bilans. Vérifie les autorisations Supabase.</p>';
     return;
   }
-  const student = (logs || [])[0]?.profiles?.display_name || profile.display_name || "Élève";
-  $("#tutor-student-name").textContent = student;
+  const studentNames = [...new Set([...(logs || []), ...(requests || [])].map(row => row.profiles?.display_name).filter(Boolean))];
+  $("#tutor-student-name").textContent = studentNames.join(", ") || "ton élève";
   $("#tutor-log-count").textContent = (logs || []).length;
   $("#tutor-request-count").textContent = (requests || []).length;
   const logHtml = (logs || []).map(row => `
