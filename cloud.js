@@ -136,13 +136,17 @@ document.addEventListener("evolia:request-saved", async (event) => {
 });
 
 function addSignOutButton() {
-  if ($("#evolia-signout")) return;
-  const button = document.createElement("button");
-  button.id = "evolia-signout";
-  button.className = "text-button";
-  button.textContent = "Déconnexion";
+  let button = $("#evolia-signout");
+  if (!button) {
+    button = document.createElement("button");
+    button.id = "evolia-signout";
+    button.className = "text-button";
+    button.textContent = "Déconnexion";
+    $(".topbar")?.append(button);
+  }
+  if (button.dataset.bound) return;
+  button.dataset.bound = "true";
   button.addEventListener("click", async () => { await supabase.auth.signOut(); location.replace("/"); });
-  $(".topbar")?.append(button);
 }
 
 async function loadTutorDashboard() {
