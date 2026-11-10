@@ -7,7 +7,7 @@ create table if not exists public.profiles (
   display_name text,
   tutor_id uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now(),
-  constraint tutor_cannot_be_assigned constraint_dummy check (role <> 'tutor' or tutor_id is null)
+  constraint tutor_cannot_be_assigned check (role <> 'tutor' or tutor_id is null)
 );
 
 create or replace function public.handle_new_evolia_user()
