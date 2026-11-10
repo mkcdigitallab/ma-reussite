@@ -1,11 +1,18 @@
-Ma réussite
-===========
-AVANT TOUT : ouvre app.js et change, tout en haut, le nom et le numéro WhatsApp du tuteur
-(format international, sans + ni espaces, ex : 221771234567).
+CAP RÉUSSITE
+=============
 
-Essayer sur ordinateur : double-clique sur index.html.
-Utiliser sur téléphone : il faut mettre le dossier en ligne (ex. GitHub Pages),
-puis ouvrir le lien et choisir « Ajouter à l'écran d'accueil ».
+Configuration :
+1. Ouvre l'application puis va dans Réglages.
+2. Saisis le prénom de l'élève.
+3. Saisis le numéro WhatsApp de l'accompagnateur avec l'indicatif du pays, sans + ni espaces (ex. Sénégal : 221771234567).
+4. Enregistre.
 
-Fichiers : index.html (structure), style.css (apparence), app.js (comportement),
-manifest.json + sw.js + icon-*.png (installation comme une vraie app).
+Le projet est statique : aucun paquet à installer. Pour le tester :
+  python3 -m http.server 8000
+Puis ouvre http://localhost:8000.
+
+Les demandes et les tâches restent dans le navigateur de l'appareil.
+WhatsApp s'ouvre pour préparer l'envoi, mais l'élève doit confirmer.
+La synchronisation entre appareils et les notifications automatiques nécessitent un backend.
+
+Voir README.md pour les détails.
