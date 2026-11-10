@@ -1,39 +1,56 @@
 # Évolia
 
-Évolia est un espace privé de suivi scolaire entre un élève et son accompagnateur.
+Évolia est un espace privé et simple de suivi scolaire entre une élève de troisième et son accompagnateur.
 
 ## Fonctionnalités
-- Connexion par e-mail et mot de passe (comptes créés par l'accompagnateur).
-- Bilans quotidiens synchronisés en ligne.
-- Demandes d'aide avec photos prises par l'appareil ou choisies dans la galerie.
-- Espace accompagnateur protégé pour consulter les bilans, difficultés, objectifs et photos privées.
+- Connexion privée par e-mail et mot de passe.
+- Bilan quotidien : travail réalisé, acquis, difficultés et objectif du lendemain.
+- Demande d'aide avec photo prise directement au téléphone ou choisie dans la galerie.
+- Espace accompagnateur pour consulter les bilans et demandes de l'élève.
+- Photos stockées dans un bucket privé, consultables par liens temporaires.
 - Interface mobile-first installable comme une PWA.
 
 ## Stack
-- Frontend : HTML, CSS, JavaScript, Vite.
-- Authentification, base PostgreSQL et stockage privé : Supabase.
+- Frontend : HTML, CSS, JavaScript et Vite.
+- Authentification, PostgreSQL et stockage : Supabase.
 - Hébergement : Render Static Site.
 
-## Configuration locale
-1. `npm install`
-2. Définir `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY`.
-3. `npm run dev`
-
-La clé publishable peut être utilisée dans le navigateur uniquement avec les politiques RLS de `supabase/schema.sql` activées. Ne jamais exposer une clé secret ou service_role.
-
 ## Configuration Supabase
-1. Créer un projet Supabase.
-2. Exécuter `supabase/schema.sql` dans SQL Editor.
-3. Dans Authentication > Users, créer le compte accompagnateur et le compte élève.
-4. Copier leurs UUID, puis exécuter les deux UPDATE commentés à la fin du SQL pour attribuer les rôles et relier l'élève à l'accompagnateur.
-5. Désactiver l'inscription publique.
-6. Renseigner l'URL du projet et la clé publishable dans les variables d'environnement Render.
+Le projet Supabase de production est déjà initialisé et son schéma a été appliqué. Pour recréer Évolia dans un autre projet :
+
+1. Exécuter `supabase/schema.sql` dans Supabase > SQL Editor.
+2. Dans Authentication > Users, créer un utilisateur pour l'accompagnateur et un autre pour l'élève.
+3. Copier les UUID de ces deux utilisateurs.
+4. Dans SQL Editor, exécuter les deux requêtes d'association commentées à la fin de `supabase/schema.sql`, en remplaçant les UUID et les noms.
+5. Dans Authentication > Settings, désactiver les inscriptions publiques si elles ne sont pas déjà désactivées. Les comptes doivent être créés par l'accompagnateur.
+6. Ne jamais utiliser une clé `service_role` ou une clé `sb_secret_` dans le navigateur.
+
+## Développement local
+```bash
+npm install
+```
+
+Créer un fichier `.env` à la racine :
+```env
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+``
+
+Puis :
+```bash
+npm run dev
+npm run build
+``
+
+La clé publishable est prévue pour le frontend. La sécurité dépend des politiques RLS, qui doivent rester activées.
 
 ## Déploiement Render
 - Type : Static Site
 - Branch : `feat/evolia-cloud`
 - Build command : `npm install && npm run build`
 - Publish directory : `dist`
-- Variables : `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`
+- Variables d'environnement :
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-Les photos sont conservées dans un bucket privé. Les liens de consultation sont signés temporairement par le client authentifié.
+Les variables sont injectées pendant le build Vite. Toute modification doit déclencher un nouveau déploiement.
