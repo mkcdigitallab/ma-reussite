@@ -1,150 +1,27 @@
-// ===== À MODIFIER : le tuteur (numéro WhatsApp au format international, sans + ni espaces) =====
-const TUTEUR = { nom: "mon tuteur", whatsapp: "221000000000" };
-const MATIERES = ["Maths", "Français", "Anglais", "Physique-Chimie", "SVT", "Histoire-Géo", "Autre"];
-const MESSAGES = [
-  "Une petite séance aujourd’hui vaut mieux que zéro.",
-  "Bloquée ? Envoie une photo, on débloque ensemble.",
-  "Chaque erreur corrigée est un point de plus.",
-  "Tu n’as pas besoin d’être parfaite, juste régulière.",
-  "Commence par 25 minutes, le reste suivra.",
-];
-const MIN = 25; // durée d'une séance de révision
-
-// ---------- Sauvegarde dans le navigateur ----------
-const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
-let S = load("reussite", { exam: "", goal: 5, sessions: {}, days: [], errors: [], notes: [] });
-const persist = () => { try { localStorage.setItem("reussite", JSON.stringify(S)); } catch {} };
-
-// ---------- Petits outils ----------
-const $ = (s) => document.querySelector(s);
-const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const isoDay = (d = new Date()) => d.toLocaleDateString("sv-SE");
-const fmt = (x) => x.toFixed(1).replace(".", ",");
-function markActive() {
-  if (!S.days.includes(isoDay())) { S.days.push(isoDay()); persist(); renderStreak(); }
-}
-
-// ---------- Navigation par onglets ----------
-document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => {
-  document.querySelectorAll("main section").forEach((s) => (s.hidden = s.id !== b.dataset.tab));
-  document.querySelectorAll("nav button").forEach((n) => n.toggleAttribute("aria-current", n === b));
-  if (b.getAttribute("aria-current")) b.setAttribute("aria-current", "page");
-}));
-
-// ---------- Série de jours et compte à rebours ----------
-function renderStreak() {
-  let n = 0; const d = new Date();
-  if (!S.days.includes(isoDay(d))) d.setDate(d.getDate() - 1);
-  while (S.days.includes(isoDay(d))) { n++; d.setDate(d.getDate() - 1); }
-  $("#streak").textContent = n ? "🔥 " + n + (n > 1 ? " jours" : " jour") : "🔥 C’est parti";
-}
-function renderCountdown() {
-  const el = $("#countdown");
-  if (!S.exam) { el.textContent = "Choisis la date"; return; }
-  const d = Math.ceil((new Date(S.exam + "T00:00") - new Date()) / 864e5);
-  el.textContent = d > 0 ? "J-" + d : d === 0 ? "C’est aujourd’hui !" : "Examen passé";
-}
-$("#exam").addEventListener("change", (e) => { S.exam = e.target.value; persist(); renderCountdown(); });
-
-// ---------- J'ai une difficulté : envoi de la photo via WhatsApp ----------
-let photo = null;
-$("#photo").addEventListener("change", (e) => {
-  photo = e.target.files[0] || null;
-  $("#preview").hidden = !photo;
-  if (photo) $("#preview").src = URL.createObjectURL(photo);
-});
-$("#sendForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const f = new FormData(e.target);
-  const text = "Bonjour " + TUTEUR.nom + ", j’ai une difficulté en " + f.get("matiere") + ".\n" + (f.get("msg") || "");
-  markActive();
-  try {
-    // Plan A : le menu de partage du téléphone (permet d'envoyer la photo directement)
-    if (photo && navigator.canShare && navigator.canShare({ files: [photo] })) {
-      await navigator.share({ files: [photo], text });
-      return;
-    }
-  } catch (err) { if (err.name === "AbortError") return; }
-  // Plan B : on enregistre la photo et on ouvre la conversation WhatsApp avec le texte prêt
-  if (photo) {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(photo); a.download = photo.name || "exercice.jpg"; a.click();
-  }
-  window.open("https://wa.me/" + TUTEUR.whatsapp + "?text=" + encodeURIComponent(text), "_blank");
-  $("#sendHint").textContent = photo ? "Photo enregistrée : ajoute-la dans la conversation WhatsApp." : "Conversation WhatsApp ouverte.";
-});
-
-// ---------- Séance de révision (minuteur) ----------
-let end = null, tick = null;
-function renderTimer() {
-  const left = end ? Math.max(0, end - Date.now()) : MIN * 60000;
-  $("#time").textContent = String(Math.floor(left / 60000)).padStart(2, "0") + ":" + String(Math.floor((left % 60000) / 1000)).padStart(2, "0");
-  if (end && left <= 0) finishSession();
-}
-function finishSession() {
-  end = null; clearInterval(tick);
-  S.sessions[isoDay()] = (S.sessions[isoDay()] || 0) + 1; markActive(); persist();
-  navigator.vibrate?.([300, 150, 300]);
-  $("#timerMsg").textContent = "Bravo, séance terminée ! Prends 5 minutes de pause 🎉";
-  $("#startBtn").textContent = "Démarrer"; renderTimer(); renderGoal();
-}
-$("#startBtn").addEventListener("click", () => {
-  if (end) { end = null; clearInterval(tick); $("#startBtn").textContent = "Démarrer"; }
-  else { end = Date.now() + MIN * 60000; tick = setInterval(renderTimer, 500); $("#startBtn").textContent = "Arrêter"; $("#timerMsg").textContent = ""; }
-  renderTimer();
-});
-function renderGoal() {
-  const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // lundi de cette semaine
-  let n = 0; for (let i = 0; i < 7; i++) { n += S.sessions[isoDay(d)] || 0; d.setDate(d.getDate() + 1); }
-  $("#bar").style.width = Math.min(100, (n / S.goal) * 100) + "%";
-  $("#goalText").textContent = n + " séance" + (n > 1 ? "s" : "") + " sur " + S.goal + " cette semaine" + (n >= S.goal ? " : objectif atteint ! 🏆" : "");
-}
-$("#goal").addEventListener("change", (e) => { S.goal = Math.max(1, Number(e.target.value) || 1); persist(); renderGoal(); });
-
-// ---------- Carnet d'erreurs ----------
-function renderErrors() {
-  const todo = S.errors.filter((e) => !e.ok).length;
-  $("#errCount").textContent = S.errors.length ? (todo ? todo + " à revoir" : "Tout est revu, bravo !") : "Note ici ce que tu as raté pour le revoir avant l’examen.";
-  $("#errList").innerHTML = [...S.errors].sort((a, b) => a.ok - b.ok).map((e) =>
-    `<li class="${e.ok ? "ok" : ""}"><input type="checkbox" data-err="${e.id}" ${e.ok ? "checked" : ""} aria-label="Revu">
-     <span><b>${esc(e.m)}</b> · ${esc(e.t)}</span><button class="x" data-del-err="${e.id}" aria-label="Supprimer">✕</button></li>`).join("");
-}
-$("#errForm").addEventListener("submit", (e) => {
-  e.preventDefault(); const f = new FormData(e.target);
-  S.errors.push({ id: String(Date.now()), m: f.get("m"), t: f.get("t"), ok: false });
-  persist(); e.target.reset(); renderErrors();
-});
-
-// ---------- Notes ----------
-function renderNotes() {
-  const by = {}; S.notes.forEach((n) => (by[n.m] ||= []).push(n.v));
-  const avg = (a) => a.reduce((s, v) => s + v, 0) / a.length;
-  const rows = Object.entries(by).map(([m, a]) => `<tr><td>${esc(m)}</td><td>${fmt(avg(a))}/20</td></tr>`).join("");
-  const tot = S.notes.length ? `<tr class="tot"><td>Moyenne (sans coefficients)</td><td>${fmt(avg(Object.values(by).map(avg)))}/20</td></tr>` : "";
-  $("#avgs").innerHTML = rows + tot;
-  $("#noteList").innerHTML = S.notes.map((n) =>
-    `<span>${esc(n.m)} ${fmt(n.v)} <button class="x" data-del-note="${n.id}" aria-label="Supprimer">✕</button></span>`).join("");
-}
-$("#noteForm").addEventListener("submit", (e) => {
-  e.preventDefault(); const f = new FormData(e.target);
-  S.notes.push({ id: String(Date.now()), m: f.get("m"), v: Math.min(20, Math.max(0, Number(f.get("v")))) });
-  persist(); e.target.reset(); renderNotes();
-});
-
-// ---------- Clics sur cases à cocher et boutons ✕ ----------
-document.addEventListener("click", (e) => {
-  const t = e.target;
-  if (t.dataset.delErr) { S.errors = S.errors.filter((x) => x.id !== t.dataset.delErr); persist(); renderErrors(); }
-  if (t.dataset.delNote) { S.notes = S.notes.filter((x) => x.id !== t.dataset.delNote); persist(); renderNotes(); }
-});
-document.addEventListener("change", (e) => {
-  const id = e.target.dataset.err; if (!id) return;
-  const err = S.errors.find((x) => x.id === id); if (err) { err.ok = e.target.checked; if (err.ok) markActive(); persist(); renderErrors(); }
-});
-
-// ---------- Démarrage ----------
-document.querySelectorAll(".mat").forEach((s) => (s.innerHTML = MATIERES.map((m) => `<option>${m}</option>`).join("")));
-$("#message").textContent = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
-$("#exam").value = S.exam; $("#goal").value = S.goal;
-renderStreak(); renderCountdown(); renderGoal(); renderErrors(); renderNotes(); renderTimer();
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js");
+const KEY="cap-reussite-v1";
+const defaults={name:"",phone:"",tasks:[],requests:[]};
+let state=readState(),selectedPhoto=null,toastTimer;
+function readState(){try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch{return {...defaults}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function notify(m){const el=$("#toast");el.textContent=m;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
+function dateLabel(){const d=new Date();$("#today-label").textContent=new Intl.DateTimeFormat("fr-FR",{weekday:"short",day:"numeric",month:"short"}).format(d);$("#date-large").textContent=new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"long"}).format(d)}
+function showView(name){const target=$("#view-"+name);if(!target)return;document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v===target));document.querySelectorAll("[data-view]").forEach(a=>a.classList.toggle("active",a.dataset.view===name));if(name==="demandes")renderRequests();if(name==="travail")renderTasks();history.replaceState(null,"","#"+name);window.scrollTo({top:0,behavior:"smooth"})}
+document.addEventListener("click",e=>{const v=e.target.closest("[data-view]");if(v){e.preventDefault();showView(v.dataset.view);return}if(e.target.closest('[data-open="demande"]')){showView("demandes");$("#request-subject").focus()}});
+$("#profile-shortcut").addEventListener("click",()=>showView("reglages"));
+function renderProfile(){$("#student-name-heading").textContent=state.name||"élève";$("#student-name").value=state.name;$("#tutor-phone").value=state.phone;$("#profile-shortcut").textContent=state.name?state.name.trim().charAt(0).toLocaleUpperCase("fr-FR"):"É"}
+function renderRequestCount(){$("#request-count").textContent=state.requests.length}
+function renderTasks(){const list=$("#task-list"),preview=$("#home-task-list");if(!state.tasks.length){list.innerHTML='<div class="empty-state">Aucune tâche pour le moment. Ajoute ta première tâche juste au-dessus.</div>';preview.innerHTML='<div class="empty-state">Aucune tâche prévue. Tu peux en ajouter dans « Mon travail ».</div>'}else{list.innerHTML=state.tasks.map(t=>'<div class="task-item '+(t.done?"done":"")+'" data-task="'+t.id+'"><input type="checkbox" aria-label="Marquer comme terminée" '+(t.done?"checked":"")+'><div class="task-copy"><strong>'+esc(t.title)+'</strong><small>'+esc(t.subject)+' · '+(t.done?"Terminée":"À faire")+'</small></div><button type="button" class="task-delete" aria-label="Supprimer la tâche">×</button></div>').join("");const next=state.tasks.filter(t=>!t.done).slice(0,3);preview.innerHTML=next.length?next.map(t=>'<div class="preview-item"><span class="check-dot"></span><div><strong>'+esc(t.title)+'</strong><small>'+esc(t.subject)+'</small></div></div>').join(""):'<div class="empty-state">Bravo ! Toutes tes tâches sont terminées 🎉</div>'}const total=state.tasks.length,done=state.tasks.filter(t=>t.done).length,pct=total?Math.round(done/total*100):0;$("#task-progress-label").textContent=done+" tâche"+(done>1?"s":"")+" terminée"+(done>1?"s":"")+" sur "+total;$("#task-progress-percent").textContent=pct+"%";$("#task-progress-bar").style.width=pct+"%"}
+$("#task-form").addEventListener("submit",e=>{e.preventDefault();const title=$("#task-title").value.trim();if(!title)return;state.tasks.unshift({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),title,subject:$("#task-subject").value,done:false});save();e.target.reset();renderTasks();notify("Tâche ajoutée !")});
+$("#task-list").addEventListener("change",e=>{if(!e.target.matches('input[type="checkbox"]'))return;const row=e.target.closest("[data-task]"),t=state.tasks.find(x=>x.id===row.dataset.task);if(t){t.done=e.target.checked;save();renderTasks()}});
+$("#task-list").addEventListener("click",e=>{const b=e.target.closest(".task-delete");if(!b)return;const id=b.closest("[data-task]").dataset.task;state.tasks=state.tasks.filter(t=>t.id!==id);save();renderTasks();notify("Tâche supprimée")});
+$("#settings-form").addEventListener("submit",e=>{e.preventDefault();state.name=$("#student-name").value.trim();state.phone=$("#tutor-phone").value.replace(/[^0-9]/g,"");save();renderProfile();notify("Réglages enregistrés")});
+$("#request-message").addEventListener("input",e=>$("#char-count").textContent=e.target.value.length+"/1200");
+$("#request-photo").addEventListener("change",e=>{selectedPhoto=e.target.files[0]||null;const box=$("#photo-preview");box.hidden=!selectedPhoto;box.innerHTML="";if(selectedPhoto){const img=document.createElement("img");img.alt="Aperçu de la photo";img.src=URL.createObjectURL(selectedPhoto);box.append(img)}});
+function renderRequests(){const box=$("#request-history");if(!state.requests.length)box.innerHTML='<div class="empty-state">Aucune demande envoyée pour le moment.</div>';else box.innerHTML=state.requests.slice(0,8).map(r=>'<article class="history-item"><div><strong>'+esc(r.subject)+'</strong><p>'+esc(r.message.slice(0,110))+(r.message.length>110?"…":"")+'</p><span class="status-pill">Préparée pour WhatsApp</span></div><time>'+new Intl.DateTimeFormat("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}).format(new Date(r.date))+'</time></article>').join("");renderRequestCount()}
+$("#request-form").addEventListener("submit",async e=>{e.preventDefault();if(!state.phone){notify("Ajoute d’abord le numéro WhatsApp dans Réglages.");showView("reglages");$("#tutor-phone").focus();return}const subject=$("#request-subject").value,message=$("#request-message").value.trim();if(!subject||!message)return;state.requests.unshift({id:Date.now(),subject,message,date:new Date().toISOString(),hasPhoto:!!selectedPhoto});save();renderRequests();const text="Bonjour"+(state.name?" "+state.name:"")+", j’ai besoin de ton aide.\n\nSujet : "+subject+"\n\n"+message;let shared=false;if(selectedPhoto&&navigator.canShare&&navigator.canShare({files:[selectedPhoto]})){try{await navigator.share({files:[selectedPhoto],title:"Demande d’aide — Cap Réussite",text});shared=true}catch(err){if(err.name==="AbortError"){notify("Partage annulé. Ta demande reste dans l’historique.");return}}}if(!shared){if(selectedPhoto){const url=URL.createObjectURL(selectedPhoto),a=document.createElement("a");a.href=url;a.download=selectedPhoto.name||"photo-exercice.jpg";a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}window.open("https://wa.me/"+state.phone+"?text="+encodeURIComponent(text),"_blank","noopener,noreferrer");notify(selectedPhoto?"Ajoute la photo téléchargée dans WhatsApp avant d’envoyer.":"WhatsApp est prêt : confirme l’envoi.")}e.target.reset();selectedPhoto=null;$("#photo-preview").hidden=true;$("#photo-preview").innerHTML="";$("#char-count").textContent="0/1200";showView("demandes")});
+$("#reset-app").addEventListener("click",()=>{if(!confirm("Effacer toutes les tâches, demandes et réglages enregistrés sur cet appareil ?"))return;localStorage.removeItem(KEY);state={...defaults};renderAll();showView("accueil");notify("Données effacées")});
+function renderAll(){dateLabel();renderProfile();renderTasks();renderRequests()}
+renderAll();const initial=location.hash.replace("#","");if(["accueil","demandes","travail","reglages"].includes(initial))showView(initial);
+if("serviceWorker" in navigator&&location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
