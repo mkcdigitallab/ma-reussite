@@ -116,8 +116,24 @@ with check (student_id = (select auth.uid()));
 
 grant usage on schema public to authenticated;
 grant select on public.profiles to authenticated;
-grant select, insert, update on public.daily_logs to authenticated;
-grant select, insert on public.help_requests to authenticated;
+grant select, insert, update, delete on public.daily_logs to authenticated;
+grant select, insert, delete on public.help_requests to authenticated;
+
+drop policy if exists "assigned tutor deletes logs" on public.daily_logs;
+create policy "assigned tutor deletes logs" on public.daily_logs
+for delete to authenticated
+using (
+  exists (select 1 from public.profiles p
+    where p.id = daily_logs.student_id and p.tutor_id = (select auth.uid()))
+);
+
+drop policy if exists "assigned tutor deletes requests" on public.help_requests;
+create policy "assigned tutor deletes requests" on public.help_requests
+for delete to authenticated
+using (
+  exists (select 1 from public.profiles p
+    where p.id = help_requests.student_id and p.tutor_id = (select auth.uid()))
+);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('student-photos', 'student-photos', false, 8388608,
@@ -148,6 +164,18 @@ using (
       where p.id::text = (storage.foldername(name))[1]
         and p.tutor_id = (select auth.uid())
     )
+  )
+);
+
+drop policy if exists "assigned tutor deletes student photos" on storage.objects;
+create policy "assigned tutor deletes student photos" on storage.objects
+for delete to authenticated
+using (
+  bucket_id = 'student-photos'
+  and exists (
+    select 1 from public.profiles p
+    where p.id::text = (storage.foldername(name))[1]
+      and p.tutor_id = (select auth.uid())
   )
 );
 
