@@ -1,17 +1,45 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#285c49"><title>Évolia — Espace accompagnateur</title>
-<link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/cloud.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#285c49">
+<meta name="description" content="Espace privé de suivi Évolia.">
+<title>Évolia — Espace accompagnateur</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/cloud.css">
 </head>
 <body class="tutor-page">
-<header class="tutor-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><path d="M20 31V17m0 7c-7 0-11-4-11-10 7 0 11 4 11 10Zm0-5c0-7 4-11 10-11 0 7-4 11-10 11Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 32h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span><span><strong>Évolia</strong><small>Espace accompagnateur</small></span></a><button id="evolia-signout" class="text-button">Déconnexion</button></header>
+<header class="tutor-header">
+  <a class="brand" href="/" aria-label="Évolia, accueil">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><path d="M20 31V17m0 7c-7 0-11-4-11-10 7 0 11 4 11 10Zm0-5c0-7 4-11 10-11 0 7-4 11-10 11Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 32h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+    <span><strong>Évolia</strong><small>Espace accompagnateur</small></span>
+  </a>
+  <div class="tutor-header-actions">
+    <span class="tutor-private-label">Espace privé</span>
+    <button id="evolia-signout" class="text-button" type="button">Déconnexion</button>
+  </div>
+</header>
 <main class="tutor-main">
-  <p class="eyebrow">SUIVI PERSONNEL</p><h1>Bonjour, accompagnateur.</h1>
-  <p class="muted">Voici les dernières nouvelles de <strong id="tutor-student-name">ton élève</strong>.</p>
-  <div class="tutor-stats"><article><strong id="tutor-log-count">—</strong><span>bilans reçus</span></article><article><strong id="tutor-request-count">—</strong><span>demandes d'aide</span></article></div>
-  <div id="tutor-content" class="tutor-content"><p class="muted">Chargement des bilans…</p></div>
+  <section class="tutor-welcome">
+    <p class="eyebrow">SUIVI SCOLAIRE</p>
+    <h1>Bonjour <span id="tutor-name">!</span></h1>
+    <p class="muted">Retrouve ici les bilans, les demandes d’aide et les progrès de ton élève.</p>
+  </section>
+  <section class="tutor-stats" aria-label="Résumé du suivi">
+    <article class="tutor-stat"><span class="tutor-stat-icon">▤</span><div><strong id="tutor-log-count">—</strong><span>Bilans reçus</span></div></article>
+    <article class="tutor-stat"><span class="tutor-stat-icon">✉</span><div><strong id="tutor-request-count">—</strong><span>Demandes d’aide</span></div></article>
+    <article class="tutor-stat"><span class="tutor-stat-icon">◉</span><div><strong id="tutor-student-count">—</strong><span>Élève(s) suivi(s)</span></div></article>
+  </section>
+  <section class="tutor-toolbar" aria-label="Filtres du suivi">
+    <div><label for="tutor-student-filter">Élève suivi</label><select id="tutor-student-filter"><option value="all">Tous les élèves</option></select></div>
+    <button id="tutor-refresh" class="button button-soft" type="button"><span aria-hidden="true">↻</span> Actualiser</button>
+  </section>
+  <div id="tutor-content" class="tutor-content" aria-live="polite">
+    <div class="tutor-loading"><span class="loading-dot"></span> Chargement du suivi…</div>
+  </div>
+  <footer class="tutor-footer">Évolia <span>•</span> Chaque jour, un pas de plus.</footer>
 </main>
 <script type="module" src="/cloud.js"></script>
-</body></html>
+</body>
+</html>
