@@ -142,7 +142,7 @@ on conflict (id) do update
 set public = false, file_size_limit = 8388608,
     allowed_mime_types = excluded.allowed_mime_types;
 
-grant select, insert on storage.objects to authenticated;
+grant select, insert, delete on storage.objects to authenticated;
 
 drop policy if exists "student uploads own photos" on storage.objects;
 create policy "student uploads own photos" on storage.objects
