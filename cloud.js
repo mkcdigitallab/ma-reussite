@@ -153,44 +153,181 @@ function addSignOutButton() {
   button.addEventListener("click", async () => { await supabase.auth.signOut(); location.replace("/"); });
 }
 
+let tutorStudents = [];
+let tutorLogs = [];
+let tutorRequests = [];
+
 async function loadTutorDashboard() {
   const root = $("#tutor-content");
   if (!root) return;
-  const [{ data: logs, error: logError }, { data: requests, error: requestError }] = await Promise.all([
-    supabase.from("daily_logs").select("*, profiles!daily_logs_student_id_fkey(display_name)").order("day", { ascending: false }).limit(100),
-    supabase.from("help_requests").select("*, profiles!help_requests_student_id_fkey(display_name)").order("created_at", { ascending: false }).limit(100)
-  ]);
-  if (logError || requestError) {
-    root.innerHTML = '<p class="muted">Impossible de charger les bilans. Vérifie les autorisations Supabase.</p>';
+  root.innerHTML = '<div class="tutor-loading"><span class="loading-dot"></span> Chargement du suivi…</div>';
+
+  const { data: students, error: studentsError } = await supabase
+    .from("profiles")
+    .select("id, display_name")
+    .eq("tutor_id", currentUser.id)
+    .order("display_name", { ascending: true });
+
+  if (studentsError) {
+    root.innerHTML = '<p class="tutor-error">Impossible de charger la liste des élèves. Vérifie les autorisations.</p>';
     return;
   }
-  const studentNames = [...new Set([...(logs || []), ...(requests || [])].map(row => row.profiles?.display_name).filter(Boolean))];
-  $("#tutor-student-name").textContent = studentNames.join(", ") || "ton élève";
-  $("#tutor-log-count").textContent = (logs || []).length;
-  $("#tutor-request-count").textContent = (requests || []).length;
-  const logHtml = (logs || []).map(row => `
-    <article class="tutor-entry">
-      <div class="tutor-entry-head"><strong>${escapeHtml(row.subject)} · ${formatDate(row.day)}</strong><span>${escapeHtml(row.effort)}</span></div>
-      <p><b>Travail réalisé :</b> ${escapeHtml(row.done)}</p>
-      <p><b>Appris :</b> ${escapeHtml(row.learned)}</p>
-      ${row.hard ? `<p><b>Difficultés :</b> ${escapeHtml(row.hard)}</p>` : ""}
-      ${row.next ? `<p><b>Objectif :</b> ${escapeHtml(row.next)}</p>` : ""}
-    </article>`).join("") || '<p class="empty-state">Aucun bilan reçu pour le moment.</p>';
-  const requestHtml = (requests || []).map(row => `
-    <article class="tutor-entry">
-      <div class="tutor-entry-head"><strong>${escapeHtml(row.subject)}</strong><time>${new Date(row.created_at).toLocaleString("fr-FR")}</time></div>
-      <p>${escapeHtml(row.message)}</p>
-      ${row.photo_path ? `<button class="text-button" data-photo-path="${escapeHtml(row.photo_path)}">Voir la photo jointe →</button>` : ""}
-    </article>`).join("") || '<p class="empty-state">Aucune demande reçue.</p>';
-  root.innerHTML = `<section class="panel"><div class="panel-heading"><div><p class="eyebrow">LES DERNIERS BILANS</p><h2>Journal de progression</h2></div></div>${logHtml}</section><section class="panel"><div class="panel-heading"><div><p class="eyebrow">BESOINS D'ACCOMPAGNEMENT</p><h2>Demandes et photos</h2></div></div>${requestHtml}</section>`;
-  root.querySelectorAll("[data-photo-path]").forEach(button => button.addEventListener("click", async () => {
-    const { data, error } = await supabase.storage.from("student-photos").createSignedUrl(button.dataset.photoPath, 90);
-    if (error) return alert("Photo momentanément indisponible.");
-    window.open(data.signedUrl, "_blank", "noopener");
-  }));
+
+  tutorStudents = students || [];
+  $("#tutor-name").textContent = profile.display_name || "accompagnateur";
+  $("#tutor-student-count").textContent = tutorStudents.length;
+
+  const filter = $("#tutor-student-filter");
+  const previousValue = filter.value || "all";
+  filter.innerHTML = '<option value="all">Tous les élèves</option>' +
+    tutorStudents.map(student => `<option value="${escapeHtml(student.id)}">${escapeHtml(student.display_name || "Élève sans prénom")}</option>`).join("");
+  filter.value = tutorStudents.some(student => student.id === previousValue) ? previousValue : "all";
+  filter.onchange = renderTutorDashboard;
+
+  if (!tutorStudents.length) {
+    tutorLogs = [];
+    tutorRequests = [];
+    renderTutorDashboard();
+    return;
+  }
+
+  const studentIds = tutorStudents.map(student => student.id);
+  const [{ data: logs, error: logError }, { data: requests, error: requestError }] = await Promise.all([
+    supabase.from("daily_logs")
+      .select("*")
+      .in("student_id", studentIds)
+      .order("day", { ascending: false })
+      .limit(500),
+    supabase.from("help_requests")
+      .select("*")
+      .in("student_id", studentIds)
+      .order("created_at", { ascending: false })
+      .limit(500)
+  ]);
+
+  if (logError || requestError) {
+    root.innerHTML = '<p class="tutor-error">Impossible de charger les données. Vérifie les autorisations Supabase puis actualise.</p>';
+    return;
+  }
+
+  tutorLogs = logs || [];
+  tutorRequests = requests || [];
+  renderTutorDashboard();
   addSignOutButton();
 }
 
+function renderTutorDashboard() {
+  const root = $("#tutor-content");
+  if (!root) return;
+  const selectedStudent = $("#tutor-student-filter")?.value || "all";
+  const logs = tutorLogs.filter(row => selectedStudent === "all" || row.student_id === selectedStudent);
+  const requests = tutorRequests.filter(row => selectedStudent === "all" || row.student_id === selectedStudent);
+  $("#tutor-log-count").textContent = logs.length;
+  $("#tutor-request-count").textContent = requests.length;
+
+  if (!tutorStudents.length) {
+    root.innerHTML = '<section class="tutor-empty"><span>⌂</span><h2>Aucun élève associé</h2><p>Le compte élève doit être associé à ton compte accompagnateur pour que ses bilans apparaissent ici.</p></section>';
+    return;
+  }
+
+  const studentName = id => tutorStudents.find(student => student.id === id)?.display_name || "Élève";
+  const logHtml = logs.map(row => `
+    <article class="tutor-entry">
+      <div class="tutor-entry-top">
+        <div><span class="tutor-entry-kind">BILAN QUOTIDIEN</span><h3>${escapeHtml(row.subject)} <span>·</span> ${formatDate(row.day)}</h3></div>
+        <span class="tutor-effort">${escapeHtml(row.effort || "—")}</span>
+      </div>
+      ${selectedStudent === "all" && tutorStudents.length > 1 ? `<p class="tutor-student-name">${escapeHtml(studentName(row.student_id))}</p>` : ""}
+      <div class="tutor-entry-details">
+        <div><span>TRAVAIL RÉALISÉ</span><p>${escapeHtml(row.done)}</p></div>
+        <div><span>CE QUI A ÉTÉ APPRIS</span><p>${escapeHtml(row.learned)}</p></div>
+        ${row.hard ? `<div class="tutor-difficulty"><span>DIFFICULTÉS RENCONTRÉES</span><p>${escapeHtml(row.hard)}</p></div>` : ""}
+        ${row.next ? `<div><span>PROCHAIN OBJECTIF</span><p>${escapeHtml(row.next)}</p></div>` : ""}
+      </div>
+      <div class="tutor-entry-actions"><button class="tutor-delete" type="button" data-delete-log="${escapeHtml(row.id)}">Supprimer ce bilan</button></div>
+    </article>`).join("") || '<div class="tutor-empty-inline">Aucun bilan reçu pour cette sélection.</div>';
+
+  const requestHtml = requests.map(row => `
+    <article class="tutor-entry">
+      <div class="tutor-entry-top">
+        <div><span class="tutor-entry-kind">DEMANDE D’AIDE</span><h3>${escapeHtml(row.subject)}</h3></div>
+        <time>${new Date(row.created_at).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}</time>
+      </div>
+      ${selectedStudent === "all" && tutorStudents.length > 1 ? `<p class="tutor-student-name">${escapeHtml(studentName(row.student_id))}</p>` : ""}
+      <p class="tutor-request-message">${escapeHtml(row.message)}</p>
+      <div class="tutor-entry-actions">
+        ${row.photo_path ? `<button class="tutor-photo-button" type="button" data-photo-path="${escapeHtml(row.photo_path)}">Voir la photo jointe ↗</button>` : '<span class="tutor-no-photo">Aucune photo jointe</span>'}
+        <button class="tutor-delete" type="button" data-delete-request="${escapeHtml(row.id)}" data-photo-path="${escapeHtml(row.photo_path || "")}">Supprimer cette demande</button>
+      </div>
+    </article>`).join("") || '<div class="tutor-empty-inline">Aucune demande d’aide pour cette sélection.</div>';
+
+  root.innerHTML = `
+    <section class="tutor-section">
+      <div class="tutor-section-heading"><div><p class="eyebrow">APPRENTISSAGES</p><h2>Bilans quotidiens</h2><p>Ce que l’élève a travaillé et appris chaque jour.</p></div><span class="tutor-section-count">${logs.length}</span></div>
+      <div class="tutor-list">${logHtml}</div>
+    </section>
+    <section class="tutor-section">
+      <div class="tutor-section-heading"><div><p class="eyebrow">ÉCHANGES</p><h2>Demandes d’aide</h2><p>Les questions et difficultés pour lesquelles l’élève a besoin de toi.</p></div><span class="tutor-section-count">${requests.length}</span></div>
+      <div class="tutor-list">${requestHtml}</div>
+    </section>`;
+
+  root.querySelectorAll("[data-photo-path]").forEach(button => {
+    if (button.hasAttribute("data-delete-request")) return;
+    button.addEventListener("click", async () => {
+      const { data, error } = await supabase.storage.from("student-photos").createSignedUrl(button.dataset.photoPath, 90);
+      if (error) return alert("Photo momentanément indisponible.");
+      window.open(data.signedUrl, "_blank", "noopener");
+    });
+  });
+
+  root.querySelectorAll("[data-delete-log]").forEach(button => {
+    button.addEventListener("click", () => deleteTutorLog(button.dataset.deleteLog, button));
+  });
+  root.querySelectorAll("[data-delete-request]").forEach(button => {
+    button.addEventListener("click", () => deleteTutorRequest(button.dataset.deleteRequest, button.dataset.photoPath, button));
+  });
+}
+
+async function deleteTutorLog(id, button) {
+  if (!confirm("Supprimer définitivement ce bilan ? Cette action ne peut pas être annulée.")) return;
+  button.disabled = true;
+  button.textContent = "Suppression…";
+  const { data, error } = await supabase.from("daily_logs").delete().eq("id", id).select("id").maybeSingle();
+  if (error || !data) {
+    button.disabled = false;
+    button.textContent = "Supprimer ce bilan";
+    alert("Le bilan n’a pas pu être supprimé. Vérifie les autorisations puis réessaie.");
+    return;
+  }
+  tutorLogs = tutorLogs.filter(row => row.id !== id);
+  renderTutorDashboard();
+}
+
+async function deleteTutorRequest(id, photoPath, button) {
+  if (!confirm("Supprimer définitivement cette demande" + (photoPath ? " et sa photo jointe" : "") + " ? Cette action ne peut pas être annulée.")) return;
+  button.disabled = true;
+  button.textContent = "Suppression…";
+
+  if (photoPath) {
+    const { error: photoError } = await supabase.storage.from("student-photos").remove([photoPath]);
+    if (photoError) {
+      button.disabled = false;
+      button.textContent = "Supprimer cette demande";
+      alert("La photo n’a pas pu être supprimée. La demande a été conservée.");
+      return;
+    }
+  }
+
+  const { data, error } = await supabase.from("help_requests").delete().eq("id", id).select("id").maybeSingle();
+  if (error || !data) {
+    button.disabled = false;
+    button.textContent = "Supprimer cette demande";
+    alert("La demande n’a pas pu être supprimée. Si elle comportait une photo, celle-ci a peut-être déjà été retirée.");
+    return;
+  }
+  tutorRequests = tutorRequests.filter(row => row.id !== id);
+  renderTutorDashboard();
+}
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
