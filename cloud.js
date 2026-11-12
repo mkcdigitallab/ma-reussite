@@ -335,6 +335,8 @@ function formatDate(value) {
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(new Date(value + "T12:00:00"));
 }
 
+$("#tutor-refresh")?.addEventListener("click", () => loadTutorDashboard());
+
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   showAuth("La connexion en ligne n'est pas encore configurée. L'administrateur doit terminer le branchement Supabase.");
 } else {
