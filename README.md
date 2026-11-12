@@ -1,51 +1,56 @@
-# Cap Réussite
+# Évolia
 
-**Cap Réussite** est une petite application web pensée pour accompagner un élève de troisième lorsque son accompagnateur n'est pas toujours disponible.
+Évolia est un espace privé et simple de suivi scolaire entre une élève de troisième et son accompagnateur.
 
-## Ce que l'application permet
+## Fonctionnalités
+- Connexion privée par e-mail et mot de passe.
+- Bilan quotidien : travail réalisé, acquis, difficultés et objectif du lendemain.
+- Demande d'aide avec photo prise directement au téléphone ou choisie dans la galerie.
+- Espace accompagnateur pour consulter les bilans et demandes de l'élève.
+- Photos stockées dans un bucket privé, consultables par liens temporaires.
+- Interface mobile-first installable comme une PWA.
 
-- Envoyer une demande d'aide ou une information à l'accompagnateur via WhatsApp.
-- Joindre une photo d'un exercice ou d'un cahier (selon les capacités de partage du téléphone).
-- Retrouver l'historique local des demandes préparées.
-- Ajouter des tâches scolaires, les classer par matière et les cocher une fois terminées.
-- Installer l'application sur un téléphone comme une PWA et ouvrir les pages déjà mises en cache hors connexion.
+## Stack
+- Frontend : HTML, CSS, JavaScript et Vite.
+- Authentification, PostgreSQL et stockage : Supabase.
+- Hébergement : Render Static Site.
 
-## Configuration
+## Configuration Supabase
+Le projet Supabase de production est déjà initialisé et son schéma a été appliqué. Pour recréer Évolia dans un autre projet :
 
-1. Ouvrir l'application.
-2. Aller dans **Réglages**.
-3. Saisir le prénom de l'élève.
-4. Saisir le numéro WhatsApp de l'accompagnateur avec l'indicatif international, uniquement des chiffres (ex. Sénégal : `221771234567`).
-5. Enregistrer.
+1. Exécuter `supabase/schema.sql` dans Supabase > SQL Editor.
+2. Dans Authentication > Users, créer un utilisateur pour l'accompagnateur et un autre pour l'élève.
+3. Copier les UUID de ces deux utilisateurs.
+4. Dans SQL Editor, exécuter les deux requêtes d'association commentées à la fin de `supabase/schema.sql`, en remplaçant les UUID et les noms.
+5. Dans Authentication > Settings, désactiver les inscriptions publiques si elles ne sont pas déjà désactivées. Les comptes doivent être créés par l'accompagnateur.
+6. Ne jamais utiliser une clé `service_role` ou une clé `sb_secret_` dans le navigateur.
 
-## Lancer le projet
-
-Le projet ne nécessite ni installation de dépendances ni compilation.
-
-Pour le tester localement, servir le dossier avec un petit serveur HTTP, par exemple :
-
+## Développement local
 ```bash
-python3 -m http.server 8000
+npm install
 ```
 
-Puis ouvrir `http://localhost:8000`.
+Créer un fichier `.env` à la racine :
+```env
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+``
 
-Pour l'installation PWA, publier le dossier sur un hébergement HTTPS, puis utiliser la commande **Ajouter à l'écran d'accueil** du navigateur.
+Puis :
+```bash
+npm run dev
+npm run build
+``
 
-## Limites importantes
+La clé publishable est prévue pour le frontend. La sécurité dépend des politiques RLS, qui doivent rester activées.
 
-- Les tâches, réglages et demandes sont enregistrés dans le stockage local du navigateur. Ils ne sont pas synchronisés entre plusieurs appareils.
-- L'application ne déclenche pas de notification à distance sur le téléphone de l'accompagnateur. Elle prépare une conversation WhatsApp ; l'élève doit confirmer l'envoi.
-- Sur certains téléphones, le partage de photo fonctionne directement. Sinon, la photo est téléchargée et doit être ajoutée manuellement dans WhatsApp.
-- Pour un véritable espace accompagnateur, une synchronisation multi-appareils et des notifications automatiques, il faudra ajouter un backend et un système d'authentification.
+## Déploiement Render
+- Type : Static Site
+- Branch : `feat/evolia-cloud`
+- Build command : `npm install && npm run build`
+- Publish directory : `dist`
+- Variables d'environnement :
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-## Fichiers principaux
-
-- `index.html` : structure et contenus.
-- `styles.css` : identité visuelle et responsive.
-- `app.js` : navigation, tâches, demandes et stockage local.
-- `manifest.webmanifest`, `sw.js`, `icon.svg` : installation PWA et cache hors ligne.
-
-## Vie privée
-
-Les données restent dans le navigateur de l'appareil. Ne pas saisir d'informations sensibles.
+Les variables sont injectées pendant le build Vite. Toute modification doit déclencher un nouveau déploiement.
